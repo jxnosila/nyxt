@@ -13,20 +13,18 @@
     nil
     :type boolean
     :documentation "Whether the hints are automatically followed when matching user input.")
-   (box-style (theme:themed-css (theme *browser*)
-                (".nyxt-hint"
-                 :background-color theme:primary
-                 :color theme:on-primary
-                 :font-weight "bold"
-                 :padding "0px 3px 0px 3px"
-                 :border-radius "2px"
-                 :z-index #.(1- (expt 2 31))))
-              :documentation "The style of the boxes, e.g. link hints.")
-   (highlighted-box-style (theme:themed-css (theme *browser*)
-                            (".nyxt-hint.nyxt-highlight-hint"
-                             :background-color theme:accent
-                             :color theme:on-accent))
-                          :documentation "The style of highlighted boxes, e.g. link hints.")
+   (style (theme:themed-css (theme *browser*)
+            (".nyxt-hint"
+             :background-color theme:primary
+             :color theme:on-primary
+             :font-weight "bold"
+             :padding "0px 3px 0px 3px"
+             :border-radius "2px"
+             :z-index #.(1- (expt 2 31)))
+            (".nyxt-hint.nyxt-highlight-hint"
+             :background-color theme:accent
+             :color theme:on-accent))
+          :documentation "The style of the boxes (link hints), including the highlighted ones.")
 
    (hints-alphabet "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                    :type string
@@ -70,12 +68,10 @@ define which elements are picked up by element hinting.")
   (unless (nyxt/ps:qs document "#nyxt-stylesheet")
     (ps:try
      (ps:let* ((style-element (ps:chain document (create-element "style")))
-               (box-style (ps:lisp (box-style (find-submode 'nyxt/hint-mode:hint-mode))))
-               (highlighted-style (ps:lisp (highlighted-box-style (find-submode 'nyxt/hint-mode:hint-mode)))))
+               (style (ps:lisp (style (find-submode 'nyxt/hint-mode:hint-mode)))))
        (setf (ps:@ style-element id) "nyxt-stylesheet")
-       (ps:chain document head (append-child style-element))
-       (ps:chain style-element sheet (insert-rule box-style 0))
-       (ps:chain style-element sheet (insert-rule highlighted-style 1)))
+       (setf (ps:@ style-element inner-text) style)
+       (ps:chain document head (append-child style-element)))
      (:catch (error)))))
 
 (define-parenscript hint-elements (nyxt-identifiers hints)
