@@ -406,7 +406,7 @@ ID is a buffer `id'."
 (defun get-headings (&key (buffer (current-buffer)))
   (pflet ((heading-scroll-position
            (element)
-           (ps:chain (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element)))
+           (ps:chain (nyxt/ps:qs-nyxt-id document (ps:lisp (nyxt/dom:get-nyxt-id element)))
                      (get-bounding-client-rect) y)))
     (with-current-buffer buffer
       (map 'list

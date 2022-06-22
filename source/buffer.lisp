@@ -824,10 +824,6 @@ Return the created buffer."
                 value
                 (update-document-model :buffer buffer)))))))
 
-(export-always 'get-nyxt-id)
-(defmethod get-nyxt-id ((element plump:element))
-  (plump:get-attribute element "nyxt-identifier"))
-
 (defmethod proxy ((buffer buffer))
   (slot-value buffer 'proxy))
 

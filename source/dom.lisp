@@ -2,6 +2,8 @@
 ;;;; SPDX-License-Identifier: BSD-3-Clause
 
 (nyxt:define-package :nyxt/dom
+  ;; FIXME: This is because window causes conflicts with buffer.lisp (somewhy?).
+  (:shadow #:window)
   (:documentation "Nyxt-specific DOM classes and functions operating on them."))
 (in-package :nyxt/dom)
 
@@ -186,6 +188,10 @@ string one."
       (collect-if-match root)
       matched-nodes)))
 
+(export-always 'get-nyxt-id)
+(defmethod get-nyxt-id ((element plump:element))
+  (plump:get-attribute element "nyxt-identifier"))
+
 (export-always 'get-unique-selector)
 (-> get-unique-selector (plump:element) t)
 (defmemo get-unique-selector (element)
@@ -340,10 +346,10 @@ TEST should be a function of two arguments comparing TEXT with element's
 
 (export-always 'focus-select-element)
 (define-parenscript focus-select-element (element)
-  (let ((id (ps:lisp (get-nyxt-id element))))
-    (ps:chain (nyxt/ps:qs-nyxt-id document id) (focus))
-    (when (functionp (ps:chain (nyxt/ps:qs-nyxt-id document id) select))
-      (ps:chain (nyxt/ps:qs-nyxt-id document id) (select)))))
+  (let ((element (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element)))))
+    (ps:chain element (focus))
+    (when (functionp (ps:chain element select))
+      (ps:chain element (select)))))
 
 (export-always 'check-element)
 (define-parenscript check-element (element &key (value t))
