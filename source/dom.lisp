@@ -171,18 +171,20 @@ JSON should have the format like what `get-document-body-json' produces:
 The closest parent goes first, the furthest one goes last."))
 
 (export-always 'ordered-select)
-(defmethod ordered-select (selector (root plump:nesting-node))
+(defun ordered-select (selector root)
   "A re-implementation of `clss:select' with the goal of preserving elements order.
 
 SELECTOR is any selector acceptable to `clss', including the compiled one and
 string one."
-  (let ((matched-nodes '()))
+  (declare (optimize speed))
+  (let ((matched-nodes (make-array 0 :adjustable t :fill-pointer 0))
+        (selector (clss::ensure-selector selector)))
     (labels ((collect-if-match (element)
                (when (clss:node-matches-p selector element)
-                 (push element matched-nodes))
+                 (vector-push-extend element matched-nodes))
                (map nil #'collect-if-match (plump:child-elements element))))
       (collect-if-match root)
-      (coerce (nreverse matched-nodes) 'vector))))
+      matched-nodes)))
 
 (export-always 'get-unique-selector)
 (-> get-unique-selector (plump:element) t)
@@ -262,9 +264,9 @@ Return two values:
                  (unique-p (selconcat :sel ":last-child")))
         (selreturn))
       ;; Then check for previous siblings.
-      (when (and previous
-                 (unique-p (selconcat (get-unique-selector previous)  " ~ " :sel)))
-        (selreturn))
+      ;; (when (and previous
+      ;;            (unique-p (selconcat (get-unique-selector previous)  " ~ " :sel)))
+      ;;   (selreturn))
       ;; Finally, go up the hierarchy.
       (when (and parents
                  (unique-p (selconcat (get-unique-selector (first parents)) " > " :sel)))
@@ -333,37 +335,54 @@ TEST should be a function of two arguments comparing TEXT with element's
     (plump:get-attribute img "alt")))
 
 (export-always 'click-element)
-(define-parenscript click-element (&key nyxt-identifier)
-  (ps:chain (nyxt/ps:qs-nyxt-id document nyxt-identifier) (click)))
+(define-parenscript click-element (element)
+  (ps:chain (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element))) (click)))
 
 (export-always 'focus-select-element)
-(define-parenscript focus-select-element (&key nyxt-identifier)
-  (ps:chain (nyxt/ps:qs-nyxt-id document nyxt-identifier) (focus))
-  (when (functionp (ps:chain (nyxt/ps:qs-nyxt-id document nyxt-identifier) select))
-    (ps:chain (nyxt/ps:qs-nyxt-id document nyxt-identifier) (select))))
+(define-parenscript focus-select-element (element)
+  (let ((id (ps:lisp (get-nyxt-id element))))
+    (ps:chain (nyxt/ps:qs-nyxt-id document id) (focus))
+    (when (functionp (ps:chain (nyxt/ps:qs-nyxt-id document id) select))
+      (ps:chain (nyxt/ps:qs-nyxt-id document id) (select)))))
 
 (export-always 'check-element)
-(define-parenscript check-element (&key nyxt-identifier (value t))
-  (ps:chain (nyxt/ps:qs-nyxt-id document nyxt-identifier)
+(define-parenscript check-element (element &key (value t))
+  (ps:chain (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element)))
             (set-attribute "checked" (ps:lisp value))))
 
 (export-always 'toggle-details-element)
-(define-parenscript toggle-details-element (&key nyxt-identifier)
-  (ps:let ((element (nyxt/ps:qs-nyxt-id document nyxt-identifier)))
+(define-parenscript toggle-details-element (element)
+  (ps:let ((element (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element)))))
     (if (ps:chain element (get-attribute "open"))
         (ps:chain element (remove-attribute "open"))
         (ps:chain element (set-attribute "open" t)))))
 
 (export-always 'select-option-element)
-(define-parenscript select-option-element (&key nyxt-identifier parent-select-identifier)
-  (ps:let* ((element (nyxt/ps:qs-nyxt-id document nyxt-identifier))
-            (parent-select (nyxt/ps:qs-nyxt-id document parent-select-identifier)))
+(define-parenscript select-option-element (element parent)
+  (ps:let* ((element (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element))))
+            (parent-select (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id parent)))))
     (if (ps:chain element (get-attribute "multiple"))
         (ps:chain element (set-attribute "selected" t))
         (setf (ps:@ parent-select value) (ps:@ element value)))))
 
 (export-always 'hover-element)
-(define-parenscript hover-element (&key nyxt-identifier)
-  (ps:let ((element (nyxt/ps:qs-nyxt-id document nyxt-identifier))
+(define-parenscript hover-element (element)
+  (ps:let ((element (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element))))
            (event (ps:new (*Event "mouseenter"))))
     (ps:chain element (dispatch-event event))))
+
+(export-always 'scroll-to-element)
+(define-parenscript scroll-to-element (element)
+  (ps:chain (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element)))
+            (scroll-into-view t)))
+
+(export-always 'set-caret-on-start)
+(define-parenscript set-caret-on-start (element)
+  (let ((el (nyxt/ps:qs-nyxt-id document (ps:lisp (get-nyxt-id element))))
+        (range (ps:chain document (create-range)))
+        (sel (ps:chain window (get-selection))))
+    (ps:chain window (focus))
+    (ps:chain range (set-start (ps:@ el child-nodes 0) 0))
+    (ps:chain range (collapse true))
+    (ps:chain sel (remove-all-ranges))
+    (ps:chain sel (add-range range))))

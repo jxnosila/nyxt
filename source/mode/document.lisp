@@ -430,14 +430,10 @@ ID is a buffer `id'."
                    (< (abs (- (scroll-position h1) vertical-scroll-position))
                       (abs (- (scroll-position h2) vertical-scroll-position))))))))
 
-(define-parenscript scroll-to-element (&key nyxt-identifier)
-  (ps:chain (nyxt/ps:qs document (ps:lisp (format nil "[nyxt-identifier=\"~a\"]" nyxt-identifier)))
-            (scroll-into-view t)))
-
 ;; TODO: Make a method on plump:node? Extract to nyxt/dom?
 (defun scroll-page-to-heading (heading)
   (set-current-buffer (buffer heading) :focus nil)
-  (scroll-to-element :nyxt-identifier (get-nyxt-id (element heading))))
+  (nyxt/dom:scroll-to-element (element heading)))
 
 (define-command next-heading (&optional (buffer (current-buffer)))
   "Scroll to the next heading of the BUFFER."
@@ -522,8 +518,7 @@ of buffers."
                              (ps:ps (nyxt/ps:lisp-eval
                                      (:title "switch-buffer-scroll")
                                      (switch-buffer :buffer (buffer heading))
-                                     (scroll-to-element :nyxt-identifier
-                                                        (get-nyxt-id (element heading)))))
+                                     (nyxt/dom:scroll-to-element (element heading))))
                              (title heading)))
                     (when (rest group)
                       (:raw (sera:mapconcat #'headings->html (list (group-headings (rest group))) "")))))))))
