@@ -159,8 +159,8 @@ BODY should end with a form returning the HTML body as a string.
 
 ARGLIST is arguments for the underlying page-generating
 function. Any argument from it is safe to use in the body of this macro.
-Beware: the ARGLIST should have nothing but keyword arguments because it's
-mapped to the URL query parameters.
+Beware: the ARGLIST should have nothing but keyword and rest arguments because
+it's mapped to the URL query parameters.
 Only Lisp values that can be converted to JavaScript with
 `webkit:lisp-to-jsc-value' are accepted.
 
@@ -170,8 +170,8 @@ See `find-internal-page-buffer'."))
   (let ((arglist (second lambda-expression)))
     (multiple-value-bind (required optional rest keyword allow-other-keys-p aux key-p)
         (alex:parse-ordinary-lambda-list arglist)
-      (declare (ignore keyword allow-other-keys-p key-p))
-      (when (or required optional rest aux)
+      (declare (ignore rest keyword allow-other-keys-p key-p))
+      (when (or required optional aux)
         (error "Only keyword parameters are allowed in an internal-page definition."))
       (setf (slot-value page 'form)
             (lambda (&rest args)
@@ -190,18 +190,19 @@ See `find-internal-page-buffer'."))
 (defmethod set-internal-page-method ((page internal-page) form)
   (when form
     (let* ((arglist (second form))
-           (keywords (nth-value 3 (alex:parse-ordinary-lambda-list arglist)))
            (body (cddr form))
            (documentation (nth-value 2 (alex:parse-body body :documentation t))))
-      (closer-mop:ensure-method
-       page
-       `(lambda (,@arglist)
-          ,@(when documentation (list documentation))
-          (declare (ignorable ,@(alex:mappend #'cdar keywords)))
-          ;; (log:warn "method"  args)
-          (set-current-buffer
-           (buffer-load (nyxt-url (name ,page) ,@(alex:mappend #'first keywords))
-                        :buffer (ensure-internal-page-buffer (name ,page)))))))))
+      (multiple-value-bind (required optional rest keywords)
+          (alex:parse-ordinary-lambda-list arglist)
+        (declare (ignore required optional))
+        (closer-mop:ensure-method
+         page
+         `(lambda (,@arglist)
+            ,@(when documentation (list documentation))
+            (declare (ignorable ,@(append (uiop:ensure-list rest) (alex:mappend #'cdar keywords))))
+            (set-current-buffer
+             (buffer-load (nyxt-url (name ,page) ,@(alex:mappend #'first keywords))
+                          :buffer (ensure-internal-page-buffer (name ,page))))))))))
 
 (defmethod initialize-instance :after ((page internal-page) &key form &allow-other-keys)
   "Register PAGE into the globally known nyxt:// URLs."
