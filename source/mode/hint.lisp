@@ -31,7 +31,6 @@
                              :background-color theme:accent
                              :color theme:on-accent))
                           :documentation "The style of highlighted boxes, e.g. link hints.")
-
    (hints-alphabet "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                    :type string
                    :documentation "The alphabet (charset) to use for hints.
