@@ -10,6 +10,14 @@
       :type (or null window)
       :export nil
       :documentation "The window in which the prompt buffer is showing.")
+     (height
+      :default
+      :type (or keyword integer)
+      :documentation "The height occupied by the prompt buffer.
+The options are:
+- :default, which sets it to the value of `prompt-buffer-open-height';
+- :fit-to-prompt, which shrinks the height to fit the input area;
+- integer, which corresponds to the height in pixels.")
      (resumable-p
       t
       :type boolean)
@@ -160,7 +168,7 @@ To access the suggestion instead, see `prompter:selected-suggestion'."
       (prompter:selected-suggestion prompt-buffer)
     (values (when suggestion (prompter:value suggestion)) source)))
 
-(defun show-prompt-buffer (prompt-buffer &key height)
+(defun show-prompt-buffer (prompt-buffer &key (height (height prompt-buffer)))
   "Show the last active prompt-buffer, if any.
 This is a low-level display function.
 See also `hide-prompt-buffer'."
@@ -170,8 +178,14 @@ See also `hide-prompt-buffer'."
     (calispel:! (prompt-buffer-channel (window prompt-buffer)) prompt-buffer)
     (prompt-render prompt-buffer)
     (setf (ffi-window-prompt-buffer-height (window prompt-buffer))
-          (or height
-              (prompt-buffer-open-height (window prompt-buffer))))
+          (cond ((eq height :default)
+                 (prompt-buffer-open-height (window prompt-buffer)))
+                ((eq height :fit-to-prompt)
+                 (ffi-buffer-evaluate-javascript
+                  prompt-buffer
+                  (ps:ps (ps:chain (nyxt/ps:qs document "#prompt") offset-height))))
+                ((numberp height)
+                 height)))
     (run-thread "Show prompt watcher"
       (let ((prompt-buffer prompt-buffer))
         (update-prompt-input prompt-buffer)
