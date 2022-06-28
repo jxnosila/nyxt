@@ -19,22 +19,23 @@
       ;; an override of the prompter slot.
       :accessor nil
       :export nil
-      :documentation "By default the prompter library creates a
-new history for each new prompt buffer.  Here we set the history to be shared globally.")
+      :documentation "By default the prompter library creates a new history for
+each new prompt buffer.  Here we set the history to be shared globally.")
      ;; TODO: Need a changed-callback?  Probably not, see `search-buffer'.  But
      ;; can we run the postprocessor without running the filter?
      (invisible-input-p
       nil
-      :documentation "Whether to replace input by a
-placeholder character.  This is useful to conceal passwords.")
+      :documentation "Whether to replace input by a placeholder character.  This
+is useful to conceal sensitive information such as passwords.")
      (hide-suggestion-count-p
       nil
-      :documentation "Whether to show the number of
-chosen suggestions inside brackets.")
+      :documentation "Whether to show the number of chosen suggestions inside
+brackets.")
      (max-suggestions
       0
       :export nil
-      :documentation "Maximum number of total suggestions that were listed at some point.")
+      :documentation "Maximum number of total suggestions that were listed at
+some point.")
      ;; TODO: Need max-lines?
      ;; (max-lines
      ;;  10
@@ -127,8 +128,8 @@ chosen suggestions inside brackets.")
      (override-map
       (make-keymap "override-map")
       :type keymap:keymap
-      :documentation "Keymap that takes precedence over all modes' keymaps.
-See `buffer's `override-map' for more details."))
+      :documentation "Keymap that takes precedence over all modes' keymaps.  See
+`buffer's `override-map' for more details."))
     (:export-class-name-p t)
     (:export-accessor-names-p t)
     (:accessor-name-transformer (class*:make-name-transformer name))
