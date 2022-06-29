@@ -177,6 +177,14 @@ define which elements are picked up by element hinting.")
 (define-class hint-source (prompter:source)
   ((prompter:name "Hints")
    (prompter:selection-actions-enabled-p t)
+   (prompter:filter
+    (if (shrink-prompt-buffer-p (find-submode 'hint-mode))
+        (lambda (suggestion source input)
+          (declare (ignore source))
+          (str:starts-with-p input
+                             (prompter:attributes-default suggestion)
+                             :ignore-case t))
+        #'prompter:fuzzy-match))
    (prompter:filter-postprocessor
     (lambda (suggestions source input)
       (declare (ignore source))
@@ -188,9 +196,10 @@ define which elements are picked up by element hinting.")
            :key #'prompter:value)
         (append matching-hints other-hints))))
    (prompter:selection-actions
-    (lambda (suggestion)
-      (highlight-selected-hint :element suggestion
-                               :scroll nil)))
+    (unless (shrink-prompt-buffer-p (find-submode 'hint-mode))
+      (lambda (suggestion)
+        (highlight-selected-hint :element suggestion
+                                 :scroll nil))))
    (prompter:return-actions (list 'identity
                                   (lambda-command click* (elements)
                                     (dolist (element (rest elements))
