@@ -121,9 +121,9 @@ Called on
    (filter-preprocessor #'delete-inexact-matches
                         :type (or null function function-symbol)
                         :documentation
-                        "Function called when
-input is modified, before filtering the suggestions.
-It is passed the following arguments:
+                        "Function called when input is modified, before
+filtering the `suggestion's with `filter'.  It is passed the following
+arguments:
 - a copy of `initial-suggestions';
 - the source;
 - the input.")
@@ -132,8 +132,8 @@ It is passed the following arguments:
                          :type (or null function function-symbol)
                          :documentation
                          "Function called when input is modified, after
-filtering the `suggestion's with `filter'.
-It is passed the following arguments:
+filtering the `suggestion's with `filter'.  It is passed the following
+arguments:
 - the filtered suggestions;
 - the source;
 - the input.")
