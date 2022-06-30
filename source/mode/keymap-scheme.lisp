@@ -11,10 +11,12 @@ Ensures that a single keybindings mode, such as `nyxt/emacs-mode', is enabled.")
   "All modes that set `keymap-scheme-name' should inherit from this mode.
 Ensures that a single keybindings mode, such as `nyxt/emacs-mode', is enabled."
   ((rememberable-p nil)
+   ;; TODO Rename to keyscheme?
    (scheme-name
     keyscheme:cua
     :type keymaps:keyscheme
     :documentation "The `keymaps:keyscheme' to enable.")
+   ;; TODO Rename to previous-keyscheme?
    (previous-keymap-scheme-name
     nil
     :type (or keymaps:keyscheme null)
